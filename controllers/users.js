@@ -75,16 +75,32 @@ export const updateOneUser = async (request, response) => {
 export const loginUser = async (request, response) => {
   try {
     const { body } = request;
+    const inputPassword = body.password
+
     const user = await usersModel.findOne({
-      email: body.email,
-      password: body.password,
+      email: body.email
     });
+  
+
     if (user) {
-      const token = jwt.sign({ user }, SecretToken, { expiresIn: "3600s" });
-      response
-        .status(200)
-        .json({ msg: `Token created ${user.name}`, token, user });
-      //response.status(200).redirect("auth")
+      const hashPassword = user.password
+      bcrypt.compare(inputPassword, hashPassword, (err, result) => {
+        if (err) {
+            response.status(404).json({ msg: "Error bcrypt.compare", hashPassword, inputPassword });
+        }
+    
+    if (result) {
+        const token = jwt.sign({ user }, SecretToken, { expiresIn: "3600s" });
+        response
+          .status(200)
+          .json({ msg: `Login OK . Token created ${user.name}`, token, user });
+        //response.status(200).redirect("auth")
+    } else {
+        response.status(404).json({ msg: "Password not correct", user, inputPassword });
+    }
+    });
+      
+
     } else {
       response.status(404).json({ msg: "User not found", body });
     }
