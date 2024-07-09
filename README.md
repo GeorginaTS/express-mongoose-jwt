@@ -8,9 +8,9 @@ GET "/" - list users
 
 GET "/:id" - content user id
 
-POST "/" - Create user
+POST "/" - Create user (data validated with express-validator)
 
-PUT "/:id" - Update user
+PUT "/:id" - Update user (data validated with express-validator)
 
 DELETE "/:id" - Delete user
 

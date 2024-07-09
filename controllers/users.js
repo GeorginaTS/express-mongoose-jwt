@@ -15,11 +15,17 @@ export const getAllUsers = async (request, response) => {
 
 export const createUser = async (request, response) => {
   try {
-    const { body } = request;
-    const data = await usersModel.create(body);
-    response.status(201).json({ msg: "User created", data });
+    let user = request.body
+    const saltRounds = 10;
+    await bcrypt.genSalt(saltRounds, function(err, salt) {
+        bcrypt.hash(user.password, salt, async function(err, hash) {
+            user.password = hash
+            const data = await usersModel.create(user);
+            response.status(201).json({ msg: "User created", data, hash });
+        });
+    });
   } catch (error) {
-    response.status(500).send("error creating user");
+    response.status(500).send({msg:"error creating user", error});
   }
 };
 
@@ -43,20 +49,26 @@ export const deleteOneUser = async (request, response) => {
       ? response.status(200).json({ msg: "Delete 1 user", id, data })
       : response.status(404).json({ msg: "User Not found", id });
   } catch (error) {
-    response.status(500).send("Error deleting user");
+    response.status(500).send({msg:"Error deleting user", error});
   }
 };
 export const updateOneUser = async (request, response) => {
   try {
     const { id } = request.params;
-    const { body } = request;
-    const options = { new: true };
-    const data = await usersModel.findByIdAndUpdate(id, body);
-    data
-      ? response.status(200).json({ msg: "Update  1 user", id, data })
-      : response.status(404).json({ msg: "User Not found", id, body });
+    let user = request.body
+    const saltRounds = 10;
+    await bcrypt.genSalt(saltRounds, function(err, salt) {
+        bcrypt.hash(user.password, salt, async function(err, hash) {
+            user.password = hash
+            const options = { new: true };
+            const data = await usersModel.findByIdAndUpdate(id, user);
+            data? response.status(200).json({ msg: "Update  1 user", id, user })
+              : response.status(404).json({ msg: "User Not found", id, user });
+        });
+    });
+ 
   } catch (error) {
-    response.status(500).send("Error deleting user");
+    response.status(500).send({msg:"Error updating user", error});
   }
 };
 
